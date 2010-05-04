@@ -1,5 +1,4 @@
-
-
+/* namespace-js Copyright (c) 2010 @hiroki_daichi */
 var Namespace = (function(){
     /* utility */
     var merge = function(aObj,bObj){
@@ -15,6 +14,7 @@ var Namespace = (function(){
             throw('Invalid namespace');
         }
     };
+    /* Namespace Class */
     var Namespace = (function(){
         var nsCache = {};
         var nsList  = [];
@@ -34,34 +34,35 @@ var Namespace = (function(){
                 throw('do not call provide twice');
             };
             this.merge = function(obj){
-                merge( this.stash,obj);
+                merge(this.stash,obj);
                 return this;
             };
-            this.registerContext = function(context,callback){
+            this.appendContext = function(context,callback){
                 this.contexts.push({
                     context :context , callback : callback
                 });
             };
             this.load = function(finishedCallback){
                 this.callbacks.push(finishedCallback);
-                if(!this.isLoading){ 
-                    this.isLoading = true;
-                    this._load();
-                }
+                if(this.isLoading) return;
+
+                this.isLoading = true;
+                this._load();
+                
+            };
+            this.dispatch = function(){
+                this.isLoading = false;
+                for(var i = 0,l= this.callbacks.length;i<l;i++)
+                    this.callbacks[i]();
+
+                this.callbacks=[];
             };
             this._load = function(){
                 var _self = this;
-
                 var unused = this.contexts[0];
-                if( !unused ){
-                    this.isLoading = false;
-                    for(var i = 0,l= this.callbacks.length;i<l;i++){
-                        this.callbacks[i]();
-                    }
-              
-                    this.callbacks=[];
-                    return;
-                }
+                if( !unused )
+                    return this.dispatch();
+
                 var callback = unused.callback;
                 var context  = unused.context;
                 context.load(function(ns){
@@ -81,7 +82,9 @@ var Namespace = (function(){
         };
         var _loadStashItem = function(ns,itemName){
             var nsStash = _loadStash(ns);
-            if( typeof(nsStash[itemName]) === 'undefined' ) throw('undefined item:' + ns + '#' + itemName);
+            if( typeof(nsStash[itemName]) === 'undefined' )
+                throw('undefined item:' + ns + '#' + itemName);
+
             return nsStash[itemName];
         }
         return {
@@ -96,7 +99,7 @@ var Namespace = (function(){
             }
         };
     })();
-    
+    /* NamespaceContext Class */
     var NamespaceContext = (function(){
         var Klass = function _Private_Class_Of_NamespaceContext(namespaceObject){
             this.namespaceObject = namespaceObject;
@@ -117,13 +120,16 @@ var Namespace = (function(){
             var _mergeWithNS = function(stash,ns){
                 var nsList = ns.split(/\./);
                 var current = stash;
+
                 for(var i = 0,l=nsList.length;i<l-1;i++){
                     if( !current[nsList[i]] ) current[nsList[i]] = {};
                     current = current[nsList[i]];
                 }
+
                 var lastLeaf = nsList[nsList.length-1];
                 if( current[lastLeaf] )
-                   return merge( current[lastLeaf] , Namespace.loadStash(ns) );
+                    return merge( current[lastLeaf] , Namespace.loadStash(ns) );
+
                 return current[lastLeaf] = Namespace.loadStash(ns);
             };
             return function(stash,useData){
@@ -134,14 +140,17 @@ var Namespace = (function(){
                 }
             };
         })();
+
         (function(){
             this.use = function(syntax){
                 var splittedUseSyntax = syntax.split(/\s/);
                 var fqn = splittedUseSyntax[0];
                 var imp = splittedUseSyntax[1];
                 var importNames = (imp) ? imp.split(/,/): null;
+
                 _assertValidFQN(fqn);
                 this.requires.push(Namespace.create(fqn));
+
                 this.useList.push({ ns: fqn,imports: importNames });
                 return this;
             };
@@ -155,7 +164,7 @@ var Namespace = (function(){
             };
             this.define = function(callback){
                 var namespaceObject = this.namespaceObject;
-                namespaceObject.registerContext(this,callback);
+                namespaceObject.appendContext(this,callback);
                 return this.namespaceObject;
             };
             this.load = function(callback){
@@ -170,15 +179,13 @@ var Namespace = (function(){
             };
             this.apply = function(callback){
                 var namespaceObject = this.namespaceObject;
-                this.use( namespaceObject.name + ' *');
-                this.load(function(ns){
-                    callback(ns);
-                });
+                this.use( [namespaceObject.name,'*'].join(' '));
+                this.load(callback);
             };
         }).apply(Klass.prototype);
         return Klass;
-    
     })();
+
     return function(nsString){
         return new NamespaceContext(Namespace.create(nsString));
     };

@@ -32,6 +32,27 @@ test('self define',function(){
         ok( ns.exportObject ,'export Object');
     });
 });
+test('export',function(){
+    Namespace('test').define(function(ns){
+        ok(ns.CURRENT_NAMESPACE,'test','creation Namespace x.y');
+        ns.provide({
+            Item : function(){this.id = 1},
+            StringExtension : function(){ this.id = 1}
+        });
+    });
+    Namespace('apps')
+    .use('test Item')
+    .apply(function(ns){
+        ok( ns.Item ,'test.Item export');
+        ok(!ns.StringExtension,'test.Item not export');
+    });
+    Namespace('apps')
+    .use('test Item,StringExtension')
+    .apply(function(ns){
+        ok( ns.Item ,'test.Item export');
+        ok( ns.StringExtension,'test.StringExtension export');
+    });
+});
 
 test('use and define',function(){
     Namespace('test').define(function(ns){
@@ -108,6 +129,7 @@ test('lazy export',function(){
         });
         },10);
     });
+
     Namespace("org.example.system").define(function(ns){
         setTimeout(function(){
             ok(true,'providing org.example.system');
@@ -130,6 +152,7 @@ test('lazy export',function(){
         ok(res,'1st HTTPRequest');
         ok(Console.log("ok"),'1st Console.log');
     }});
+
     Namespace("org.example.application")
     .use('org.example.net *')
     .use('org.example.system Console')
