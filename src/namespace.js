@@ -170,9 +170,9 @@ var Namespace = (function(){
             this.load = function(callback){
                 var _self    = this;
                 var require  = this.requires.shift();
-                if( !require ){
+                if( !require )
                     return callback( _self.createContextualObject() )
-                }
+                
                 require.load(function(){
                     _self.load(callback);
                 });
@@ -188,5 +188,60 @@ var Namespace = (function(){
 
     return function(nsString){
         return new NamespaceContext(Namespace.create(nsString));
+    };
+})();
+
+Namespace.GET = (function(){
+    var get = (function(){
+        var createRequester = function() {
+            var xhr;
+            try { xhr = new XMLHttpRequest() } catch(e) {
+                try { xhr = new ActiveXObject("Msxml2.XMLHTTP.6.0") } catch(e) {
+                    try { xhr = new ActiveXObject("Msxml2.XMLHTTP.3.0") } catch(e) {
+                        try { xhr = new ActiveXObject("Msxml2.XMLHTTP") } catch(e) {
+                            try { xhr = new ActiveXObject("Microsoft.XMLHTTP") } catch(e) {
+                                throw new Error( "This browser does not support XMLHttpRequest." )
+                            }
+                        }
+                    }
+                }
+            }
+            return xhr;
+        };
+        var isSuccessStatus = function(status) {
+            return (status >= 200 && status < 300) || 
+                    status == 304 || 
+                    status == 1223 ||
+                    (!status && (location.protocol == "file:" || location.protocol == "chrome:") );
+        };
+        
+        return function(url,callback){
+            xhr = createRequester();
+            xhr.open('GET',url,true);
+            xhr.onreadystatechange = function(){
+                if(xhr.readyState === 4){
+                    if( isSuccessStatus( xhr.status || 0 )){
+                        callback(true,xhr.responseText);
+                    }else{
+                        callback(false);
+                    }
+                }
+            };
+            xhr.send('')
+        };
+    })();
+
+    return function(url){
+        return function(ns){
+            get(url,function(isSuccess,responseText){
+                if( isSuccess ){
+                    ns.provide(eval(responseText));
+                }else{
+                    var pub = {};
+                    pub[url] = 'loading error';
+                    ns.provide(pub);
+                }
+            });
+        };
     };
 })();

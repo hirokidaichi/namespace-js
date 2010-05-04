@@ -165,3 +165,27 @@ test('lazy export',function(){
     }});
     stop();
 });
+
+
+
+test('xhr get',function(){
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js'));
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js'));
+    Namespace('org.yabooo.net').define(function(ns){
+        ns.provide({
+            Item : function(){this.id = 2;}
+        });
+    });
+
+    Namespace('sample')
+    .use('org.yabooo.net')
+    .apply(function(ns){with(ns){
+        start();
+        ok( new org.yabooo.net.TCPServer );
+        ok( new org.yabooo.net.TCPClient );
+        ok( new org.yabooo.net.SampleClass );
+    }});
+    
+    stop();
+});
+
