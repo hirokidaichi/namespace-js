@@ -178,15 +178,13 @@ var Namespace = (function(){
                     require.load(function(){
                         if( length <= ++used )
                             callback( _self.createContextualObject() );
-   
                     });
                 })( this.requires[i] );
 
             };
             this.apply = function(callback){
                 var namespaceObject = this.namespaceObject;
-                this.use( [namespaceObject.name,'*'].join(' '));
-                this.load(callback);
+                this.use( [namespaceObject.name,'*'].join(' ')).load(callback);
             };
         }).apply(Klass.prototype);
         return Klass;
@@ -196,7 +194,9 @@ var Namespace = (function(){
         return new NamespaceContext(Namespace.create(nsString || 'main'));
     };
 })();
+
 Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); }
+
 Namespace.fromInternal = (function(){
     var get = (function(){
         var createRequester = function() {
@@ -254,25 +254,26 @@ Namespace.fromInternal = (function(){
         };
     };
 })();
+
 Namespace.GET = Namespace.fromInternal;
 Namespace.fromExternal = (function(){
     var callbacks = {};
     var createScriptElement = function(url,callback){
         var scriptElement = document.createElement('script');
-        scriptElement.src = url;
+
         scriptElement.loaded = false;
         
         scriptElement.onload = function(){
-            scriptElement.loaded = true;
+            this.loaded = true;
             callback();
         };
         scriptElement.onreadystatechange = function(){
-            if( ('loaded'  === scriptElement.readyState || 'complete'=== scriptElement.readyState ) 
-                && ! scriptElement.loaded ){
-                scriptElement.loaded = true;
-                callback();
-            }                    
+            if( !/^(loaded|complete)$/.test( this.readyState )) return;
+            if( this.loaded ) return;
+            scriptElement.loaded = true;
+            callback();
         };
+        scriptElement.src = url;
         document.body.appendChild( scriptElement );
         return scriptElement.src;
     };
