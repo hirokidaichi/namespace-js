@@ -169,13 +169,19 @@ var Namespace = (function(){
             };
             this.load = function(callback){
                 var _self    = this;
-                var require  = this.requires.shift();
-                if( !require )
-                    return callback( _self.createContextualObject() )
+                if( this.requires.length == 0 )
+                    return callback( _self.createContextualObject() );
                 
-                require.load(function(){
-                    _self.load(callback);
-                });
+                var length = this.requires.length;
+                var used   = 0;
+                for(var i = 0;i<length;i++)(function(require){
+                    require.load(function(){
+                        if( length <= ++used )
+                            callback( _self.createContextualObject() );
+   
+                    });
+                })( this.requires[i] );
+
             };
             this.apply = function(callback){
                 var namespaceObject = this.namespaceObject;
@@ -187,9 +193,10 @@ var Namespace = (function(){
     })();
 
     return function(nsString){
-        return new NamespaceContext(Namespace.create(nsString));
+        return new NamespaceContext(Namespace.create(nsString || 'main'));
     };
 })();
+Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); }
 
 Namespace.GET = (function(){
     var get = (function(){
@@ -216,7 +223,7 @@ Namespace.GET = (function(){
         };
         
         return function(url,callback){
-            xhr = createRequester();
+            var xhr = createRequester();
             xhr.open('GET',url,true);
             xhr.onreadystatechange = function(){
                 if(xhr.readyState === 4){
@@ -231,11 +238,14 @@ Namespace.GET = (function(){
         };
     })();
 
-    return function(url){
+    return function(url,isManualProvide){
         return function(ns){
             get(url,function(isSuccess,responseText){
                 if( isSuccess ){
-                    ns.provide(eval(responseText));
+                    if( isManualProvide )
+                        return eval(responseText);
+                    else
+                        return ns.provide( eval( responseText ) );
                 }else{
                     var pub = {};
                     pub[url] = 'loading error';
@@ -245,3 +255,5 @@ Namespace.GET = (function(){
         };
     };
 })();
+
+

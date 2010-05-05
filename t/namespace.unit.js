@@ -169,8 +169,8 @@ test('lazy export',function(){
 
 
 test('xhr get',function(){
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js'));
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js'));
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js?' +(new Date).getTime()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js?'+(new Date).getTime()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -183,6 +183,28 @@ test('xhr get',function(){
         start();
         ok( new org.yabooo.net.TCPServer );
         ok( new org.yabooo.net.TCPClient );
+        ok( new org.yabooo.net.SampleClass );
+    }});
+    
+    stop();
+});
+
+test('xhr get use',function(){
+    Namespace('org.yabooo.net').define( Namespace.GET('/t/sample.js?' +(new Date).getTime()) );
+    Namespace('org.yabooo.net2').define( Namespace.GET('/t/sample2.js?'+(new Date).getTime()) );
+    Namespace('org.yabooo.net').define(function(ns){
+        ns.provide({
+            Item : function(){this.id = 2;}
+        });
+    });
+
+    Namespace('sample')
+    .use('org.yabooo.net')
+    .use('org.yabooo.net2')
+    .apply(function(ns){with(ns){
+        start();
+        ok( new org.yabooo.net2.TCPServer );
+        ok( new org.yabooo.net2.TCPClient );
         ok( new org.yabooo.net.SampleClass );
     }});
     
