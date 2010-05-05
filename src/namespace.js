@@ -197,8 +197,7 @@ var Namespace = (function(){
     };
 })();
 Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); }
-
-Namespace.GET = (function(){
+Namespace.fromInternal = (function(){
     var get = (function(){
         var createRequester = function() {
             var xhr;
@@ -255,5 +254,40 @@ Namespace.GET = (function(){
         };
     };
 })();
-
-
+Namespace.GET = Namespace.fromInternal;
+Namespace.fromExternal = (function(){
+    var callbacks = {};
+    var createScriptElement = function(url,callback){
+        var scriptElement = document.createElement('script');
+        scriptElement.src = url;
+        scriptElement.loaded = false;
+        
+        scriptElement.onload = function(){
+            scriptElement.loaded = true;
+            callback();
+        };
+        scriptElement.onreadystatechange = function(){
+            if( ('loaded'  === scriptElement.readyState || 'complete'=== scriptElement.readyState ) 
+                && ! scriptElement.loaded ){
+                scriptElement.loaded = true;
+                callback();
+            }                    
+        };
+        document.body.appendChild( scriptElement );
+        return scriptElement.src;
+    };
+    var domSrc = function(url){
+        return function(ns){
+            var src = createScriptElement(url,function(){
+                var name = ns.CURRENT_NAMESPACE;
+                var cb = callbacks[name];
+                delete callbacks[name];
+                cb( ns );
+            });
+        }
+    };
+    domSrc.registerCallback = function(namespace,callback) {
+        callbacks[namespace] = callback;
+    };
+    return domSrc;
+})();

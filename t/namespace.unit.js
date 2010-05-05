@@ -1,5 +1,6 @@
 
 
+if(!Date.now) Date.now = function(){ return (new Date).getTime()};
 test('namespace',function(){
     ok(Namespace,'has Namespace');
     ok(Namespace('x'),'creation Namespace x');
@@ -169,8 +170,8 @@ test('lazy export',function(){
 
 
 test('xhr get',function(){
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js?' +(new Date).getTime()) );
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js?'+(new Date).getTime()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js?' +Date.now()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -190,8 +191,8 @@ test('xhr get',function(){
 });
 
 test('xhr get use',function(){
-    Namespace('org.yabooo.net').define( Namespace.GET('/t/sample.js?' +(new Date).getTime()) );
-    Namespace('org.yabooo.net2').define( Namespace.GET('/t/sample2.js?'+(new Date).getTime()) );
+    Namespace('org.yabooo.net').define( Namespace.GET('/t/sample.js?' +Date.now() ));
+    Namespace('org.yabooo.net2').define( Namespace.GET('/t/sample2.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -206,6 +207,49 @@ test('xhr get use',function(){
         ok( new org.yabooo.net2.TCPServer );
         ok( new org.yabooo.net2.TCPClient );
         ok( new org.yabooo.net.SampleClass );
+    }});
+    
+    stop();
+});
+
+
+test('script dom',function(){
+    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/sample3.js?'+Date.now()) );
+    Namespace('org.yabooo.net2').define( Namespace.fromExternal('/t/sample4.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define(function(ns){
+        ns.provide({
+            Item : function(){this.id = 2;}
+        });
+    });
+    Namespace
+    .use('org.yabooo.net')
+    .use('org.yabooo.net2')
+    .apply(function(ns){with(ns){
+        start();
+        ok( new org.yabooo.net.SomeClass );
+        ok( new org.yabooo.net2.SomeClass2 );
+    }});
+    
+    stop();
+});
+
+test('script define',function(){
+    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/sample5.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/sample6.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define(function(ns){
+        ok( ns , 'third define');
+        ns.provide({
+            Item : function(){this.id = 2;}
+        });
+    });
+
+    Namespace('sample')
+    .use('org.yabooo.net')
+    .apply(function(ns){with(ns){
+        start();
+        ok( new org.yabooo.net.TCPServer );
+        ok( new org.yabooo.net.TCPClient );
+        ok( new org.yabooo.net.Item );
     }});
     
     stop();
