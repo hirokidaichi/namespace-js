@@ -10,86 +10,120 @@ var Namespace = (function(){
         return aObj;
     };
     var _assertValidFQN = function(fqn){
-        if( !fqn.match(/^[a-z][a-z0-9.]*[a-z0-9]?$/) ){
-            throw('Invalid namespace');
-        }
+        if(!(/^[a-z0-9_.]+/).test(fqn))
+            throw('invalid namespace');
     };
-    /* Namespace Class */
-    var Namespace = (function(){
+
+    var Proc = (function(){
+        /* Namespace Class */
+        var Proc = (function(){
+            /* constructor*/
+            var Klass = function _Private_Class_Of_Proc(){
+                this.state = {};
+                this._status = 'init';
+                this.steps = [];
+            };
+            (function(){
+                this.next = function(state){
+                    if(state) this.enqueue(state);
+                    return this;
+                };
+                this.isRunning = function(){
+                    return (this._status === 'running');
+                };
+                this.enqueue = function(state){
+                    this.steps.push(state);
+                };
+                this.dequeue = function(){
+                    return this.steps.shift();
+                };
+                this.call = function(initialState,callback){
+                    if( this.isRunning() ) {
+                        throw("do not run twice");
+                    }
+                    this.state = initialState || {};
+                    this.enqueue(function($c){
+                        $c();
+                        if(callback)callback(this);
+                    });
+                    this._status = 'running';
+                    this._invoke();
+                };
+                this._invoke = function(){
+                    var _self = this;
+                    var step = _self.dequeue();
+                    if( !step ){
+                        this._status = 'finished';
+                        return;
+                    }
+                    if( step.call ) {
+                        return step.call( _self.state,function _cont(state){
+                            if( state ){
+                                _self.state = state;
+                            }
+                            _self._invoke();
+                        });
+                    }
+                    var finishedProcess = 0;
+                    if( step.length === 0 ){
+                        _self._invoke();
+                    }
+                    for(var i =0,l=step.length;i<l;i++){
+                        step[i].call(_self.state,function _joinWait(){
+                            finishedProcess++;
+                            if( finishedProcess == l ){
+                                _self._invoke();
+                            }
+                        });
+                    }
+                };
+            }).apply(Klass.prototype);
+            return Klass;
+        })();
+        return function next(state){
+            var proc = new Proc;
+            return proc.next(state);
+        };
+    })();
+
+    var NamespaceObject = (function(){
         var nsCache = {};
-        var nsList  = [];
-        /* constructor*/
-        var Klass = function _Private_Class_Of_Namespace(fqn){
+        var Klass = function _Private_Class_Of_NamespaceObject(fqn){
             this.stash   = {
                 CURRENT_NAMESPACE : fqn
             };
             this.name = fqn;
-            this.contexts = [];
-            this.isLoading = false;
-            this.callbacks = [];
+            this.proc = Proc();
         };
-        
         (function(){
-            var justThrow = function(){
-                throw('do not call provide twice');
+            this.enqueue = function(context){
+                this.proc.next(context);
+            };
+            this.call = function(state,callback){
+                this.proc.call({},callback);
+            };
+            this.valueOf = function(){
+                return "#NamespaceObject<" + this.name + ">";
             };
             this.merge = function(obj){
                 merge(this.stash,obj);
                 return this;
             };
-            this.appendContext = function(context,callback){
-                this.contexts.push({
-                    context :context , callback : callback
-                });
+            this.getExport = function(importNames){
+               var retStash = {};
+                for(var i = 0,l=importNames.length;i<l;i++){
+                    var importSyntax = importNames[i];
+                    if( importSyntax === '*' ) return this.stash;
+                    retStash[importSyntax] = this.stash[importSyntax];
+                }
+                return retStash;
             };
-            this.load = function(finishedCallback){
-                this.callbacks.push(finishedCallback);
-                if(this.isLoading) return;
-
-                this.isLoading = true;
-                this._load();
-                
+            this.getStash = function(){
+                return this.stash;
             };
-            this.dispatch = function(){
-                this.isLoading = false;
-                for(var i = 0,l= this.callbacks.length;i<l;i++)
-                    this.callbacks[i]();
-
-                this.callbacks=[];
-            };
-            this._load = function(){
-                var _self = this;
-                var unused = this.contexts[0];
-                if( !unused )
-                    return this.dispatch();
-
-                var callback = unused.callback;
-                var context  = unused.context;
-                context.load(function(ns){
-                    ns.provide = function(obj){
-                        ns.provide = justThrow;
-                        _self.contexts.shift();
-                        _self.merge(obj)._load();
-                    };
-                    callback(merge(ns,_self.stash));
-                });
-            };
-        }).apply(Klass.prototype); 
+         }).apply(Klass.prototype);
          
-        var _loadStash = function(ns){
-            if(!nsCache[ns]) throw('undefined namespace:' + ns);
-            return nsCache[ns].stash;
-        };
-        var _loadStashItem = function(ns,itemName){
-            var nsStash = _loadStash(ns);
-            if( typeof(nsStash[itemName]) === 'undefined' )
-                throw('undefined item:' + ns + '#' + itemName);
-
-            return nsStash[itemName];
-        }
-        return {
-            loadStash     : _loadStash,
-            loadStashItem : _loadStashItem,
+         return {
             create :function(fqn){
                 _assertValidFQN(fqn);
                 if( nsCache[fqn] )
@@ -99,27 +133,47 @@ var Namespace = (function(){
             }
         };
     })();
-    /* NamespaceContext Class */
-    var NamespaceContext = (function(){
-        var Klass = function _Private_Class_Of_NamespaceContext(namespaceObject){
+
+    var NamespaceDefinition = (function(){
+        var Klass = function _Private_Class_Of_NamespaceDefinition(namespaceObject){
             this.namespaceObject = namespaceObject;
-            this.callbacks = [];
-            this.requires  = [];
-            this.useList   = [];
+
+            this.requires       = [];
+            this.useList        = [];
+            this.stash          = {};
+            this.defineFunc ;
+
+            var _self = this;
+            this.namespaceObject.enqueue( function($c){ 
+                _self.apply($c);
+            });
+
         };
-        var _mergeUseData = (function(){
-            var _loadImport = function(ns,imports){
-                var retStash = {};
-                for(var i = 0,l=imports.length;i<l;i++){
-                    var importSyntax = imports[i];
-                    if( importSyntax === '*' ) return Namespace.loadStash(ns);
-                    retStash[importSyntax] = Namespace.loadStashItem(ns,importSyntax);
-                }
-                return retStash;
+        (function(){
+            this.use = function(syntax){
+                this.useList.push(syntax);
+                var splittedUseSyntax = syntax.split(/\s/);
+                var fqn = splittedUseSyntax[0];
+                var imp = splittedUseSyntax[1];
+                var importNames = (imp) ? imp.split(/,/): null;
+                _assertValidFQN(fqn);
+                this.requires.push(function($c){
+                    var context = this;
+                    var require = NamespaceObject.create(fqn);
+                    require.call(this,function(state){
+                        context.loadImport(require,importNames);
+                        $c();
+                    });
+                });
+                return this;
             };
-            var _mergeWithNS = function(stash,ns){
+            this._mergeStash = function(obj){
+                merge( this.stash,obj );
+            };
+            this._mergeStashWithNS = function(nsObj){
+                var ns     = nsObj.name;
                 var nsList = ns.split(/\./);
-                var current = stash;
+                var current = this.getStash();
 
                 for(var i = 0,l=nsList.length;i<l-1;i++){
                     if( !current[nsList[i]] ) current[nsList[i]] = {};
@@ -128,75 +182,67 @@ var Namespace = (function(){
 
                 var lastLeaf = nsList[nsList.length-1];
                 if( current[lastLeaf] )
-                    return merge( current[lastLeaf] , Namespace.loadStash(ns) );
+                    return merge( current[lastLeaf] , nsObj.getStash() );
 
-                return current[lastLeaf] = Namespace.loadStash(ns);
+                return current[lastLeaf] = nsObj.getStash();
             };
-            return function(stash,useData){
-                if( useData.imports ){
-                    merge( stash , _loadImport(useData.ns,useData.imports));
+            this.loadImport = function(nsObj,importNames){
+                if( importNames ){
+                    this._mergeStash( nsObj.getExport(importNames) );
                 }else{
-                    _mergeWithNS(stash,useData.ns);
+                    this._mergeStashWithNS( nsObj );
                 }
-            };
-        })();
-
-        (function(){
-            this.use = function(syntax){
-                var splittedUseSyntax = syntax.split(/\s/);
-                var fqn = splittedUseSyntax[0];
-                var imp = splittedUseSyntax[1];
-                var importNames = (imp) ? imp.split(/,/): null;
-
-                _assertValidFQN(fqn);
-                this.requires.push(Namespace.create(fqn));
-
-                this.useList.push({ ns: fqn,imports: importNames });
-                return this;
-            };
-            this.createContextualObject = function(){
-                var useList = this.useList;
-                var retObj  = {};
-                for(var i=0,l=useList.length;i<l;i++) {
-                    _mergeUseData(retObj,useList[i])
-                }
-                return retObj;
             };
             this.define = function(callback){
-                var namespaceObject = this.namespaceObject;
-                namespaceObject.appendContext(this,callback);
-                return this.namespaceObject;
+                var nsObj = this.namespaceObject;
+                var nsDef = this;
+                this.defineFunc = function($c){
+                    var ns = {
+                        provide : function(obj){
+                            nsObj.merge(obj);
+                            $c();
+                        }
+                    };
+                    merge( ns, nsDef.getStash() );
+                    merge( ns, nsObj.getStash() );
+                    callback(ns);
+                };
             };
-            this.load = function(callback){
-                var _self    = this;
-                if( this.requires.length == 0 )
-                    return callback( _self.createContextualObject() );
-                
-                var length = this.requires.length;
-                var used   = 0;
-                for(var i = 0;i<length;i++)(function(require){
-                    require.load(function(){
-                        if( length <= ++used )
-                            callback( _self.createContextualObject() );
-                    });
-                })( this.requires[i] );
-
+            this.getStash = function(){
+                return this.stash;
+            };
+            this.valueOf = function(){
+                return "#NamespaceDefinition<"+this.namespaceObject+"> uses :" + this.useList.join(',');
             };
             this.apply = function(callback){
-                var namespaceObject = this.namespaceObject;
-                this.use( [namespaceObject.name,'*'].join(' ')).load(callback);
+                var nsDef = this;
+                var nsObj = this.namespaceObject;
+                Proc(this.requires).next(this.defineFunc).call(this,function(){
+                    callback( nsDef.getStash() );
+                });
             };
-        }).apply(Klass.prototype);
-        return Klass;
+         }).apply(Klass.prototype);
+         return Klass;
     })();
 
-    return function(nsString){
-        return new NamespaceContext(Namespace.create(nsString || 'main'));
+
+    var namespaceFactory = function(nsString){
+        return new NamespaceDefinition(NamespaceObject.create(nsString || 'main'));
     };
+    namespaceFactory.Object     = NamespaceObject;
+    namespaceFactory.Definition = NamespaceDefinition;
+    namespaceFactory.Proc       = Proc;
+
+    namespaceFactory('namespace').define(function(ns){
+        ns.provide({
+            Proc : Proc
+        });
+    });
+    return namespaceFactory;
 })();
 
-Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); }
 
+Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); }
 Namespace.fromInternal = (function(){
     var get = (function(){
         var createRequester = function() {
