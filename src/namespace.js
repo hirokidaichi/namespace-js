@@ -339,6 +339,8 @@ Namespace.fromExternal = (function(){
     return domSrc;
 })();
 
-//try{
-//    if(exports) {exports.Namespace = Namespace; }
-//}catch(e){}
+try{
+    if( module ){
+        module.exports = Namespace;
+    }
+}catch(e){}
