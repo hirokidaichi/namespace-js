@@ -2,7 +2,15 @@
 <html>
 <head>
 <title>Namespace Test</title>
-<script src="../src/namespace.js"></script>
+<script>
+    document.writeln([
+        "<script ",
+        "src='",
+        "../src/namespace.js?",
+        Date.now(),
+        "'></script",">"
+    ].join(''));
+</script>
 <script src="tlib/qunit/qunit.js"></script>
 <link rel="stylesheet" href="tlib/qunit/qunit.css">
 <script src="namespace.unit.js"></script>

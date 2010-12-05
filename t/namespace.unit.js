@@ -266,8 +266,8 @@ test('lazy export',function(){
 
 
 test('xhr get',function(){
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/static/js/mixi/touch/common/namespace/sample.js?' +Date.now()) );
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/static/js/mixi/touch/common/namespace/sample2.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js?' +Date.now()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -290,8 +290,8 @@ test('xhr get',function(){
 
 
 test('xhr get use',function(){
-    Namespace('org.yabooo.net').define( Namespace.GET('/t/static/js/mixi/touch/common/namespace/sample.js?' +Date.now() ));
-    Namespace('org.yabooo.net2').define( Namespace.GET('/t/static/js/mixi/touch/common/namespace/sample2.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define( Namespace.GET('/t/sample.js?' +Date.now() ));
+    Namespace('org.yabooo.net2').define( Namespace.GET('/t/sample2.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -313,8 +313,8 @@ test('xhr get use',function(){
 
 
 test('script dom',function(){
-    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/static/js/mixi/touch/common/namespace/sample3.js?'+Date.now()) );
-    Namespace('org.yabooo.net2').define( Namespace.fromExternal('/t/static/js/mixi/touch/common/namespace/sample4.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/sample3.js?'+Date.now()) );
+    Namespace('org.yabooo.net2').define( Namespace.fromExternal('/t/sample4.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -333,9 +333,9 @@ test('script dom',function(){
 });
 
 test('script define',function(){
-    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/static/js/mixi/touch/common/namespace/sample5.js?'+Date.now()) );
-    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/static/js/mixi/touch/common/namespace/sample6.js?'+Date.now()) );
-    Namespace('org.yabooo.net').define(function(ns){
+    Namespace('org.yabooo.net3').define( Namespace.fromExternal('/t/sample5.js?'+Date.now()) );
+    Namespace('org.yabooo.net3').define( Namespace.fromExternal('/t/sample6.js?'+Date.now()) );
+    Namespace('org.yabooo.net3').define(function(ns){
         ok( ns , 'third define');
         ns.provide({
             Item : function(){this.id = 2;}
@@ -343,12 +343,12 @@ test('script define',function(){
     });
 
     Namespace('sample')
-    .use('org.yabooo.net')
+    .use('org.yabooo.net3')
     .apply(function(ns){with(ns){
         start();
-        ok( new org.yabooo.net.TCPServer );
-        ok( new org.yabooo.net.TCPClient );
-        ok( new org.yabooo.net.Item );
+        ok( new org.yabooo.net3.TCPServer );
+        ok( new org.yabooo.net3.TCPClient );
+        ok( new org.yabooo.net3.Item );
     }});
 
     stop();
