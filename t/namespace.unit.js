@@ -10,8 +10,8 @@ test('namespace',function(){
 
 test('namespace proc',function(){
     var count = 0;
-    Namespace.use('namespace Proc').apply(function(ns){
-        var proc = ns.Proc(function($c){
+    Namespace().apply(function(ns){
+        var proc = Namespace.Proc(function($c){
             this["[1]"] = ++count;
             $c();
         }).next(function($c){
