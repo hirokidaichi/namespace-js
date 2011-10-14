@@ -102,7 +102,13 @@ var Namespace = (function(){
             var importNames = importName.split(/,/),
                 retStash    = {};
             for(var i = 0,l=importNames.length;i<l;i++){
-                retStash[ importNames[i] ] = this.stash[ importNames[i] ];
+                var names = importNames[i].split('=>');
+                if (1 < names.length) {
+                  retStash[ names[1] ] = this.stash[ names[0] ];
+                }
+                else {
+                  retStash[ importNames[i] ] = this.stash[ importNames[i] ];
+                }
             }
             return retStash;
         }
