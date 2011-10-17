@@ -99,10 +99,10 @@ var Namespace = (function(){
         getExport: function(importName) {
             if (importName === '*') return this.stash;
 
-            var importNames = importName.split(/\s*,\s*/),
+            var importNames = importName.split(','),
                 retStash    = {};
             for(var i = 0,l=importNames.length;i<l;i++){
-                var names = importNames[i].split(/\s*=>\s*/);
+                var names = importNames[i].split('=>');
                 if (1 < names.length) {
                   retStash[ names[1] ] = this.stash[ names[0] ];
                 }
