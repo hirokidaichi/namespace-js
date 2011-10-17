@@ -149,7 +149,20 @@ test('export',function(){
         ok( ns.StringExtension,'test.StringExtension export');
     });
     Namespace('apps')
+    .use('test Item, StringExtension')
+    .apply(function(ns){
+        ok( ns.Item ,'test.Item export');
+        ok( ns.StringExtension,'test.StringExtension export');
+    });
+    Namespace('apps')
     .use('test Item=>MyItem')
+    .apply(function(ns){
+        ok( ns.MyItem ,'test.MyItem export');
+        ok(!ns.Item ,'test.Item not export');
+        ok(!ns.StringExtension,'test.Item not export');
+    });
+    Namespace('apps')
+    .use('test Item => MyItem')
     .apply(function(ns){
         ok( ns.MyItem ,'test.MyItem export');
         ok(!ns.Item ,'test.Item not export');
