@@ -99,10 +99,16 @@ var Namespace = (function(){
         getExport: function(importName) {
             if (importName === '*') return this.stash;
 
-            var importNames = importName.split(/,/),
+            var importNames = importName.split(','),
                 retStash    = {};
             for(var i = 0,l=importNames.length;i<l;i++){
-                retStash[ importNames[i] ] = this.stash[ importNames[i] ];
+                var names = importNames[i].split('=>');
+                if (1 < names.length) {
+                  retStash[ names[1] ] = this.stash[ names[0] ];
+                }
+                else {
+                  retStash[ importNames[i] ] = this.stash[ importNames[i] ];
+                }
             }
             return retStash;
         }
@@ -133,7 +139,8 @@ var Namespace = (function(){
             this.useList.push(syntax);
             var splitted   = syntax.split(/\s+/);
             var fqn        = splitted[0];
-            var importName = splitted[1];
+            splitted[0] = '';
+            var importName = splitted.join('');
             _assertValidFQN(fqn);
             this.requires.push(function($c){
                 var context = this;
