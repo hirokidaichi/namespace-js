@@ -1,5 +1,5 @@
 /* namespace-js Copyright (c) 2010 @hiroki_daichi */
-/*global XMLHttpRequest location document module ActiveXObject*/
+/*global XMLHttpRequest:false,location:false,document:false,module:false,ActiveXObject:false*/
 var Namespace = (function(){
     /* utility */
     var merge = function(target, source){
@@ -33,7 +33,7 @@ var Namespace = (function(){
             return this.steps.shift();
         },
         call: function(initialState,callback){
-            if( this.isRunning() )  throw("do not run twice"); 
+            if( this.isRunning() )  throw("do not run twice");
 
             this.state = initialState || {};
             this.enqueue(function($c){
@@ -48,7 +48,7 @@ var Namespace = (function(){
             var step  = _self.dequeue();
             if( !step ){
                 _self._status = 'finished';
-                return;
+                return undefined;
             }
             if( step.call ) {
                 return step.call( _self.state,function _cont(state){
@@ -69,6 +69,7 @@ var Namespace = (function(){
             for(var i =0,l=step.length;i<l;i++){
                 step[i].call(_self.state,_getJoinWait(l));
             }
+            return undefined;
         }
     });
 
@@ -84,14 +85,14 @@ var Namespace = (function(){
         });
     };
     merge(NamespaceObject.prototype, {
-        enqueue: function(context) { 
-            this.proc.next(context); 
+        enqueue: function(context) {
+            this.proc.next(context);
         },
-        call: function(state,callback) { 
-            this.proc.call(state, callback); 
+        call: function(state,callback) {
+            this.proc.call(state, callback);
         },
-        valueOf: function() { 
-            return "#NamespaceObject<" + this.fqn + ">"; 
+        valueOf: function() {
+            return "#NamespaceObject<" + this.fqn + ">";
         },
         merge: function(obj) {
             merge(this.stash,obj);
@@ -149,7 +150,7 @@ var Namespace = (function(){
             this.requires.push(function($c){
                 var context = this;
                 var require = NamespaceObjectFactory.create(fqn);
-                require.call(this,function(state){
+                require.call(this,function(){
                     context.loadImport(require,importName);
                     $c();
                 });
@@ -178,12 +179,12 @@ var Namespace = (function(){
         define: function(callback){
             var nsDef = this, nsObj = this.namespaceObject;
             this.defineCallback = function($c) {
-                var ns = { 
+                var ns = {
                     provide : function(obj){
                         nsObj.merge(obj);
                         $c();
-                    } 
-                }; 
+                    }
+                };
                 merge(ns, nsDef.getStash());
                 merge(ns, nsObj.getStash());
                 callback(ns);
@@ -223,11 +224,11 @@ Namespace.fromInternal = Namespace.GET = (function(){
     var get = (function(){
         var createRequester = function() {
             var xhr;
-            try { xhr = new XMLHttpRequest(); } catch(e) {
-                try { xhr = new ActiveXObject("Msxml2.XMLHTTP.6.0"); } catch(e) {
-                    try { xhr = new ActiveXObject("Msxml2.XMLHTTP.3.0"); } catch(e) {
-                        try { xhr = new ActiveXObject("Msxml2.XMLHTTP"); } catch(e) {
-                            try { xhr = new ActiveXObject("Microsoft.XMLHTTP"); } catch(e) {
+            try { xhr = new XMLHttpRequest(); } catch(e0) {
+                try { xhr = new ActiveXObject("Msxml2.XMLHTTP.6.0"); } catch(e1) {
+                    try { xhr = new ActiveXObject("Msxml2.XMLHTTP.3.0"); } catch(e2) {
+                        try { xhr = new ActiveXObject("Msxml2.XMLHTTP"); } catch(e3) {
+                            try { xhr = new ActiveXObject("Microsoft.XMLHTTP"); } catch(e4) {
                                 throw new Error( "This browser does not support XMLHttpRequest." );
                             }
                         }
@@ -237,12 +238,12 @@ Namespace.fromInternal = Namespace.GET = (function(){
             return xhr;
         };
         var isSuccessStatus = function(status) {
-            return (status >= 200 && status < 300) || 
-                    status == 304 || 
+            return (status >= 200 && status < 300) ||
+                    status == 304 ||
                     status == 1223 ||
                     (!status && (location.protocol == "file:" || location.protocol == "chrome:") );
         };
-        
+
         return function(url,callback){
             var xhr = createRequester();
             xhr.open('GET',url,true);
@@ -272,6 +273,7 @@ Namespace.fromInternal = Namespace.GET = (function(){
                     var pub = {};
                     pub[url] = 'loading error';
                     ns.provide(pub);
+                    return undefined;
                 }
             });
         };
@@ -284,7 +286,7 @@ Namespace.fromExternal = (function(){
         var scriptElement = document.createElement('script');
 
         scriptElement.loaded = false;
-        
+
         scriptElement.onload = function(){
             this.loaded = true;
             callback();
