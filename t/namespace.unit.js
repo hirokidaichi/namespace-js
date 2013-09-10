@@ -47,10 +47,10 @@ test('namespace proc',function(){
         proc.call({},function(state){
             start();
             ok(state);
-            equals(state['[1]'],1);
-            equals(state['[2]'],2);
-            equals(state['[3]'],3);
-            equals(state['[8]'],8);
+            equal(state['[1]'],1);
+            equal(state['[2]'],2);
+            equal(state['[3]'],3);
+            equal(state['[8]'],8);
             ok(true);
         });
     });
@@ -68,16 +68,16 @@ test('self define',function(){
     });
     Namespace('x.y').define(function(ns){
         ok(ns.CURRENT_NAMESPACE,'x.y','creation Namespace x.y');
-        equals( ns.exportOne , true , 'export true');
-        equals( ns.exportTwo , false, 'export false');
+        equal( ns.exportOne , true , 'export true');
+        equal( ns.exportTwo , false, 'export false');
         ok( ns.exportObject ,'export Object');
         ns.provide({
             exportThree : function(){}
         });
     });
     Namespace.use('x.y *').apply(function(ns){
-        equals( ns.exportOne , true , 'export true');
-        equals( ns.exportTwo , false, 'export false');
+        equal( ns.exportOne , true , 'export true');
+        equal( ns.exportTwo , false, 'export false');
         ok( ns.exportObject ,'export Object');
     });
     var count = 0;
@@ -85,7 +85,7 @@ test('self define',function(){
     Namespace('something.utility')
     .define(function(ns){
         ok(true);
-        equals(++count,1);
+        equal(++count,1);
         ns.provide({
             tuneHtml : function(){}
         }); 
@@ -95,7 +95,7 @@ test('self define',function(){
     .use('something.utility tuneHtml')
     .define(function(ns){
         ok(true);
-        equals(++count,2);
+        equal(++count,2);
         ns.provide({
            Test1 : function(){}
         });
@@ -104,7 +104,7 @@ test('self define',function(){
     .use('something.utility tuneHtml')
     .define(function(ns){
         ok(true);
-        equals(++count,3);
+        equal(++count,3);
         ns.provide({
            Test2 : function(){}
         });
@@ -113,7 +113,7 @@ test('self define',function(){
     .use('something.utility tuneHtml')
     .define(function(ns){
         ok(true);
-        equals(++count,4);
+        equal(++count,4);
         ns.provide({
             Test3 : function(){}
         });
@@ -130,7 +130,7 @@ test('self define',function(){
 
 test('export',function(){
     Namespace('test').define(function(ns){
-        equals(ns.CURRENT_NAMESPACE,'test','creation Namespace x.y');
+        equal(ns.CURRENT_NAMESPACE,'test','creation Namespace x.y');
         ns.provide({
             Item : function(){this.id = 1},
             StringExtension : function(){ this.id = 1}
@@ -188,8 +188,8 @@ test('use and define',function(){
     .apply(function(ns){with(ns){
         var item1 = new test.Item;
         var item2 = new test2.Item;
-        equals(item1.id,1,'item1 id');
-        equals(item2.id,2,'item2 id');
+        equal(item1.id,1,'item1 id');
+        equal(item2.id,2,'item2 id');
     }});
 
     Namespace('x.y')
@@ -198,8 +198,8 @@ test('use and define',function(){
     .apply(function(ns){with(ns){
         var item1 = new Item;
         var item2 = new test2.Item;
-        equals(item1.id,1,'item1 id');
-        equals(item2.id,2,'item2 id');
+        equal(item1.id,1,'item1 id');
+        equal(item2.id,2,'item2 id');
     }});
 
     Namespace('x.y')
@@ -208,8 +208,8 @@ test('use and define',function(){
     .apply(function(ns){with(ns){
         var item1 = new Item;
         var item2 = new Item;
-        equals(item1.id,2,'item1 id');
-        equals(item2.id,2,'item2 id');
+        equal(item1.id,2,'item1 id');
+        equal(item2.id,2,'item2 id');
     }});
 
     Namespace('x.y')
@@ -218,8 +218,8 @@ test('use and define',function(){
     .define(function(ns){with(ns){
         var item1 = new test.Item;
         var item2 = new test2.Item;
-        equals(item1.id,1,'item1 id');
-        equals(item2.id,2,'item2 id');
+        equal(item1.id,1,'item1 id');
+        equal(item2.id,2,'item2 id');
         provide({
             itemList : [item1,item2]
         });
@@ -286,8 +286,8 @@ test('lazy export',function(){
 
 
 test('xhr get',function(){
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample.js?' +Date.now()) );
-    Namespace('org.yabooo.net').define(Namespace.GET('/t/sample2.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('sample.js?' +Date.now()) );
+    Namespace('org.yabooo.net').define(Namespace.GET('sample2.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -310,8 +310,8 @@ test('xhr get',function(){
 
 
 test('xhr get use',function(){
-    Namespace('org.yabooo.net').define( Namespace.GET('/t/sample.js?' +Date.now() ));
-    Namespace('org.yabooo.net2').define( Namespace.GET('/t/sample2.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define( Namespace.GET('sample.js?' +Date.now() ));
+    Namespace('org.yabooo.net2').define( Namespace.GET('sample2.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -333,8 +333,8 @@ test('xhr get use',function(){
 
 
 test('script dom',function(){
-    Namespace('org.yabooo.net').define( Namespace.fromExternal('/t/sample3.js?'+Date.now()) );
-    Namespace('org.yabooo.net2').define( Namespace.fromExternal('/t/sample4.js?'+Date.now()) );
+    Namespace('org.yabooo.net').define( Namespace.fromExternal('sample3.js?'+Date.now()) );
+    Namespace('org.yabooo.net2').define( Namespace.fromExternal('sample4.js?'+Date.now()) );
     Namespace('org.yabooo.net').define(function(ns){
         ns.provide({
             Item : function(){this.id = 2;}
@@ -353,8 +353,8 @@ test('script dom',function(){
 });
 
 test('script define',function(){
-    Namespace('org.yabooo.net3').define( Namespace.fromExternal('/t/sample5.js?'+Date.now()) );
-    Namespace('org.yabooo.net3').define( Namespace.fromExternal('/t/sample6.js?'+Date.now()) );
+    Namespace('org.yabooo.net3').define( Namespace.fromExternal('sample5.js?'+Date.now()) );
+    Namespace('org.yabooo.net3').define( Namespace.fromExternal('sample6.js?'+Date.now()) );
     Namespace('org.yabooo.net3').define(function(ns){
         ok( ns , 'third define');
         ns.provide({

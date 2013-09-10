@@ -1,4 +1,5 @@
 /* namespace-js Copyright (c) 2010 @hiroki_daichi */
+/*global XMLHttpRequest location document module ActiveXObject*/
 var Namespace = (function(){
     /* utility */
     var merge = function(target, source){
@@ -57,13 +58,16 @@ var Namespace = (function(){
             }
             var finishedProcess = 0;
             if( step.length === 0 ) _self._invoke();
-            for(var i =0,l=step.length;i<l;i++){
-                step[i].call(_self.state,function _joinWait(){
+            var _getJoinWait = function(l){
+                return function _joinWait() {
                     finishedProcess++;
                     if( finishedProcess == l ){
                         _self._invoke();
                     }
-                });
+                };
+            };
+            for(var i =0,l=step.length;i<l;i++){
+                step[i].call(_self.state,_getJoinWait(l));
             }
         }
     });
@@ -214,17 +218,17 @@ var Namespace = (function(){
     return createNamespace;
 })();
 
-Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); }
+Namespace.use = function(useSyntax){ return Namespace().use(useSyntax); };
 Namespace.fromInternal = Namespace.GET = (function(){
     var get = (function(){
         var createRequester = function() {
             var xhr;
-            try { xhr = new XMLHttpRequest() } catch(e) {
-                try { xhr = new ActiveXObject("Msxml2.XMLHTTP.6.0") } catch(e) {
-                    try { xhr = new ActiveXObject("Msxml2.XMLHTTP.3.0") } catch(e) {
-                        try { xhr = new ActiveXObject("Msxml2.XMLHTTP") } catch(e) {
-                            try { xhr = new ActiveXObject("Microsoft.XMLHTTP") } catch(e) {
-                                throw new Error( "This browser does not support XMLHttpRequest." )
+            try { xhr = new XMLHttpRequest(); } catch(e) {
+                try { xhr = new ActiveXObject("Msxml2.XMLHTTP.6.0"); } catch(e) {
+                    try { xhr = new ActiveXObject("Msxml2.XMLHTTP.3.0"); } catch(e) {
+                        try { xhr = new ActiveXObject("Msxml2.XMLHTTP"); } catch(e) {
+                            try { xhr = new ActiveXObject("Microsoft.XMLHTTP"); } catch(e) {
+                                throw new Error( "This browser does not support XMLHttpRequest." );
                             }
                         }
                     }
@@ -251,13 +255,14 @@ Namespace.fromInternal = Namespace.GET = (function(){
                     }
                 }
             };
-            xhr.send('')
+            xhr.send('');
         };
     })();
 
     return function(url,isManualProvide){
         return function(ns){
             get(url,function(isSuccess,responseText){
+                /*jshint evil: true */
                 if( isSuccess ){
                     if( isManualProvide )
                         return eval(responseText);
@@ -296,13 +301,13 @@ Namespace.fromExternal = (function(){
     };
     var domSrc = function(url){
         return function(ns){
-            var src = createScriptElement(url,function(){
+            createScriptElement(url,function(){
                 var name = ns.CURRENT_NAMESPACE;
                 var cb = callbacks[name];
                 delete callbacks[name];
                 cb( ns );
             });
-        }
+        };
     };
     domSrc.registerCallback = function(namespace,callback) {
         callbacks[namespace] = callback;
