@@ -1,6 +1,5 @@
-
-
-if(!Date.now) Date.now = function(){ return (new Date).getTime()};
+/*global test:false, ok:false, stop:false, start:false, equal:false, Namespace:false, setTimeout:false */
+if(!Date.now) Date.now = function(){ return (new Date()).getTime(); };
 test('namespace',function(){
     ok(Namespace,'has Namespace');
     ok(Namespace('x'),'creation Namespace x');
@@ -10,7 +9,7 @@ test('namespace',function(){
 
 test('namespace proc',function(){
     var count = 0;
-    Namespace().apply(function(ns){
+    Namespace().apply(function(){
         var proc = Namespace.Proc(function($c){
             this["[1]"] = ++count;
             $c();
@@ -132,8 +131,8 @@ test('export',function(){
     Namespace('test').define(function(ns){
         equal(ns.CURRENT_NAMESPACE,'test','creation Namespace x.y');
         ns.provide({
-            Item : function(){this.id = 1},
-            StringExtension : function(){ this.id = 1}
+            Item : function(){this.id = 1;},
+            StringExtension : function(){ this.id = 1;}
         });
     });
     Namespace('apps')
@@ -174,7 +173,7 @@ test('use and define',function(){
     Namespace('test').define(function(ns){
         ok(ns.CURRENT_NAMESPACE,'test','creation Namespace x.y');
         ns.provide({
-            Item : function(){this.id = 1}
+            Item : function(){this.id = 1;}
         });
     });
     Namespace('test2').define(function(ns){
@@ -185,45 +184,45 @@ test('use and define',function(){
     Namespace('x.y')
     .use('test')
     .use('test2')
-    .apply(function(ns){with(ns){
-        var item1 = new test.Item;
-        var item2 = new test2.Item;
+    .apply(function(ns){
+        var item1 = new ns.test.Item();
+        var item2 = new ns.test2.Item();
         equal(item1.id,1,'item1 id');
         equal(item2.id,2,'item2 id');
-    }});
+    });
 
     Namespace('x.y')
     .use('test *')
     .use('test2')
-    .apply(function(ns){with(ns){
-        var item1 = new Item;
-        var item2 = new test2.Item;
+    .apply(function(ns){
+        var item1 = new ns.Item();
+        var item2 = new ns.test2.Item();
         equal(item1.id,1,'item1 id');
         equal(item2.id,2,'item2 id');
-    }});
+    });
 
     Namespace('x.y')
     .use('test *')
     .use('test2 *')
-    .apply(function(ns){with(ns){
-        var item1 = new Item;
-        var item2 = new Item;
+    .apply(function(ns){
+        var item1 = new ns.Item();
+        var item2 = new ns.Item();
         equal(item1.id,2,'item1 id');
         equal(item2.id,2,'item2 id');
-    }});
+    });
 
     Namespace('x.y')
     .use('test')
     .use('test2')
-    .define(function(ns){with(ns){
-        var item1 = new test.Item;
-        var item2 = new test2.Item;
+    .define(function(ns){
+        var item1 = new ns.test.Item();
+        var item2 = new ns.test2.Item();
         equal(item1.id,1,'item1 id');
         equal(item2.id,2,'item2 id');
-        provide({
+        ns.provide({
             itemList : [item1,item2]
         });
-    }});
+    });
 
     Namespace('x')
     .use('x.y')
@@ -252,7 +251,7 @@ test('lazy export',function(){
             start();
             ns.provide({
                 Console : {
-                    log : function(item){return true; }
+                    log : function(){return true; }
                 }
             });
         },1000);
@@ -260,23 +259,23 @@ test('lazy export',function(){
     Namespace("org.example.application")
     .use('org.example.net *')
     .use('org.example.system Console')
-    .define(function(ns){with(ns){
-        var req = new HTTPRequest;
-        var res = new HTTPResponse;
+    .define(function(ns){
+        var req = new ns.HTTPRequest();
+        var res = new ns.HTTPResponse();
         ok(req,'2nd HTTPResponse');
         ok(res,'2nd HTTPRequest');
-        ok(Console.log("ok"),'2nd Console.log');
-    }});
+        ok(ns.Console.log("ok"),'2nd Console.log');
+    });
     Namespace("org.example.application")
     .use('org.example.net *')
     .use('org.example.system Console')
-    .apply(function(ns){with(ns){
-        var req = new HTTPRequest;
-        var res = new HTTPResponse;
+    .apply(function(ns){
+        var req = new ns.HTTPRequest();
+        var res = new ns.HTTPResponse();
         ok(req,'1st HTTPResponse');
         ok(res,'1st HTTPRequest');
-        ok(Console.log("ok"),'1st Console.log');
-    }});
+        ok(ns.Console.log("ok"),'1st Console.log');
+    });
 
 
 
@@ -296,12 +295,12 @@ test('xhr get',function(){
 
     Namespace('sample')
     .use('org.yabooo.net')
-    .apply(function(ns){with(ns){
+    .apply(function(ns){
         start();
-        ok( new org.yabooo.net.TCPServer );
-        ok( new org.yabooo.net.TCPClient );
-        ok( new org.yabooo.net.SampleClass );
-    }});
+        ok( new ns.org.yabooo.net.TCPServer() );
+        ok( new ns.org.yabooo.net.TCPClient() );
+        ok( new ns.org.yabooo.net.SampleClass() );
+    });
 
     stop();
 });
@@ -321,12 +320,12 @@ test('xhr get use',function(){
     Namespace('sample')
     .use('org.yabooo.net')
     .use('org.yabooo.net2')
-    .apply(function(ns){with(ns){
+    .apply(function(ns){
         start();
-        ok( new org.yabooo.net2.TCPServer );
-        ok( new org.yabooo.net2.TCPClient );
-        ok( new org.yabooo.net.SampleClass );
-    }});
+        ok( new ns.org.yabooo.net2.TCPServer() );
+        ok( new ns.org.yabooo.net2.TCPClient() );
+        ok( new ns.org.yabooo.net.SampleClass() );
+    });
 
     stop();
 });
@@ -343,11 +342,11 @@ test('script dom',function(){
     Namespace
     .use('org.yabooo.net')
     .use('org.yabooo.net2')
-    .apply(function(ns){with(ns){
+    .apply(function(ns){
         start();
-        ok( new org.yabooo.net.SomeClass );
-        ok( new org.yabooo.net2.SomeClass2 );
-    }});
+        ok( new ns.org.yabooo.net.SomeClass() );
+        ok( new ns.org.yabooo.net2.SomeClass2() );
+    });
 
     stop();
 });
@@ -364,14 +363,12 @@ test('script define',function(){
 
     Namespace('sample')
     .use('org.yabooo.net3')
-    .apply(function(ns){with(ns){
+    .apply(function(ns){
         start();
-        ok( new org.yabooo.net3.TCPServer );
-        ok( new org.yabooo.net3.TCPClient );
-        ok( new org.yabooo.net3.Item );
-    }});
+        ok( new ns.org.yabooo.net3.TCPServer() );
+        ok( new ns.org.yabooo.net3.TCPClient() );
+        ok( new ns.org.yabooo.net3.Item() );
+    });
 
     stop();
 });
-
-

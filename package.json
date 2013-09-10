@@ -1,0 +1,24 @@
+{
+  "name": "namespace-js",
+  "version": "0.0.1",
+  "description": "遅延評価可能で、シンプルなネームスペースライブラリ",
+  "main": "none",
+  "scripts": {
+    "test": "grunt qunit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:hirokidaichi/namespace-js.git"
+  },
+  "keywords": [
+    "javascript",
+    "framework"
+  ],
+  "author": "hirokidaichi",
+  "license": "none",
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.4",
+    "grunt-contrib-qunit": "~0.2.2"
+  }
+}
