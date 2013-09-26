@@ -18,9 +18,16 @@ module.exports = function(grunt) {
         /* qunit */
         qunit: {
             all: ['t/**/*.html']
-        }
+        },
+
+        /* jasmine */
+        jasmine_node: {
+            projectRoot: './t/spec/',
+            forceExit: true
+        },
     });
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-qunit');
+    grunt.loadNpmTasks('grunt-jasmine-node');
 };
