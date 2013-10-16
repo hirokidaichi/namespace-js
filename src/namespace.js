@@ -1,5 +1,24 @@
+(function(){
 /* namespace-js Copyright (c) 2010 @hiroki_daichi */
 /*global XMLHttpRequest:false,location:false,document:false,module:false,ActiveXObject:false*/
+
+/* for nodejs utility */
+var _resolvedRequire = function(requirePath){
+    var resolvedModule = function(filename){
+        var path = require('path');
+        if (filename.charAt(0) !== '.') return filename;
+        return path.resolve(path.dirname(module.parent.filename), filename);
+    };
+    var required = require(resolvedModule(requirePath));
+    return required;
+};
+var _getRemovedExtentionPath = function(filePath){
+    var splitFilePath = filePath.match(/(\w*)(\.)?(js)?$/);
+    var removedExtentionPath = splitFilePath[1];
+    return removedExtentionPath;
+};
+/* for nodejs utility */
+
 var Namespace = (function(){
     /* utility */
     var merge = function(target, source){
@@ -10,7 +29,6 @@ var Namespace = (function(){
     var _assertValidFQN = function(fqn){
         if(!(/^[a-z0-9_.]+/).test(fqn)) throw('invalid namespace');
     };
-
     var Procedure = function _Private_Class_Of_Proc(){
         merge(this, {
             state  : {},
@@ -190,6 +208,16 @@ var Namespace = (function(){
                 callback(ns);
             };
         },
+        import: function(requirePath){
+            var nsDef = this, nsObj = this.namespaceObject;
+            this.defineCallback = function($c) {
+                var stash = {};
+                var removedExtentionPath = _getRemovedExtentionPath(requirePath);
+                stash[removedExtentionPath] = _resolvedRequire(requirePath);
+                nsObj.merge(stash);
+                $c();
+            };
+        },
         getStash: function(){
             return this.stash;
         },
@@ -317,4 +345,22 @@ Namespace.fromExternal = (function(){
     return domSrc;
 })();
 
-try{ module.exports = Namespace; }catch(e){}
+/* namespaced by node module on nodejs */
+Namespace.loadFile = (function(){
+    return function(filePath, namespace){
+        Namespace(namespace || _getRemovedExtentionPath(filePath))
+        .define(function(ns){
+            ns.provide(_resolvedRequire(filePath));
+        });
+    };
+})();
+
+/* export */
+try{
+    window.Namespace = Namespace;
+}catch(e){}
+try{
+    module.exports = Namespace;
+}catch(e){}
+
+})();
