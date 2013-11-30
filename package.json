@@ -1,8 +1,8 @@
 {
   "name": "namespace-js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "遅延評価可能で、シンプルなネームスペースライブラリ",
-  "main": "none",
+  "main": "src/namespace.js",
   "scripts": {
     "test": "grunt qunit"
   },
