@@ -1,0 +1,27 @@
+{
+  "name": "namespace-js",
+  "version": "1.0.0",
+  "homepage": "https://github.com/hirokidaichi/namespace-js",
+  "authors": [
+    "@hiroki_daichi"
+  ],
+  "description": "namespace-jsは遅延評価可能なシンプルなネームスペースライブラリです。",
+  "main": "src/namespace.js",
+  "keywords": [
+    "namespace",
+    "module",
+    "lazyload"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "qunit": "~1.14.0",
+    "jasmine": "~2.0.0"
+  }
+}
